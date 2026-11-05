@@ -11,6 +11,12 @@
   // h: 0〜360, s/v: 0〜100, a: 0〜1
   const state = { h: 210, s: 70, v: 90, a: 1 };
 
+  // ===== 変更履歴（Undo / Redo） =====
+  // 初期色を確定済みの色として履歴を開始する
+  const history = window.ColorHistory.create(state);
+  // キー操作の連続入力をまとめて 1 件の履歴にするための待ち時間 [ms]
+  const KEY_COMMIT_DELAY = 500;
+
   // ===== ホイールの寸法（直径に対する割合。style.css の .wheel 系と揃えること） =====
   const RING_INNER_RADIUS = 40;   // リング内側の半径 [%]
   const HUE_CURSOR_RADIUS = 45;   // 色相つまみを置く半径（リング幅の中央）[%]
@@ -27,7 +33,9 @@
     hex: $('hex-input'),
     r: $('rgb-r'), g: $('rgb-g'), b: $('rgb-b'), ra: $('rgb-a'),
     h: $('hsv-h'), s: $('hsv-s'), v: $('hsv-v'), ha: $('hsv-a'),
-    toast: $('toast')
+    toast: $('toast'),
+    undo: $('undo-button'),
+    redo: $('redo-button')
   };
 
   // ===== 表示用の文字列生成 =====
@@ -108,7 +116,78 @@
       el.v.value = Math.round(state.v);
       el.ha.value = round(state.a, 2);
     }
+
+    // Undo / Redo ボタンの押せる・押せないを更新
+    updateHistoryButtons();
   }
+
+  // ===== 変更履歴の操作 =====
+
+  // キー操作後に履歴を確定するためのタイマー
+  let commitTimer = null;
+
+  /** Undo / Redo ボタンの有効・無効を現在の履歴に合わせる */
+  function updateHistoryButtons() {
+    el.undo.disabled = !history.canUndo(state);
+    el.redo.disabled = !history.canRedo(state);
+  }
+
+  /** 現在の色を履歴に確定する（1 回の操作が終わったときに呼ぶ） */
+  function commitNow() {
+    clearTimeout(commitTimer);
+    history.commit(state);
+    updateHistoryButtons();
+  }
+
+  /** 少し待ってから確定する（矢印キーの連打・長押しを 1 件の履歴にまとめる） */
+  function scheduleCommit() {
+    clearTimeout(commitTimer);
+    commitTimer = setTimeout(commitNow, KEY_COMMIT_DELAY);
+  }
+
+  /** 履歴から取り出した色を状態に反映する */
+  function restore(color) {
+    if (!color) return;
+    state.h = color.h;
+    state.s = color.s;
+    state.v = color.v;
+    state.a = color.a;
+    render();
+  }
+
+  /** 1 つ前の色に戻す */
+  function undo() {
+    clearTimeout(commitTimer);
+    restore(history.undo(state));
+    updateHistoryButtons();
+  }
+
+  /** 取り消した色をやり直す */
+  function redo() {
+    clearTimeout(commitTimer);
+    restore(history.redo(state));
+    updateHistoryButtons();
+  }
+
+  el.undo.addEventListener('click', undo);
+  el.redo.addEventListener('click', redo);
+
+  // キーボードショートカット: Ctrl(⌘)+Z で元に戻す、Ctrl(⌘)+Shift+Z / Ctrl(⌘)+Y でやり直す
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.isComposing) return;
+    // 文字入力欄では、ブラウザ標準の入力の取り消しを優先する
+    const t = e.target;
+    if (t instanceof HTMLInputElement && t.type !== 'range') return;
+
+    const key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+      e.preventDefault();
+      redo();
+    }
+  });
 
   // ===== 入力値の読み取り =====
 
@@ -152,6 +231,8 @@
   el.svPanel.addEventListener('pointermove', function (e) {
     if (el.svPanel.hasPointerCapture(e.pointerId)) updateSvFromPointer(e);
   });
+  // ドラッグを終えたら 1 件の履歴として確定する
+  el.svPanel.addEventListener('lostpointercapture', commitNow);
 
   // 矢印キーで微調整（Shift 押下時は 10 刻み）
   el.svPanel.addEventListener('keydown', function (e) {
@@ -166,6 +247,7 @@
     state.s = C.clamp(state.s + move[0], 0, 100);
     state.v = C.clamp(state.v + move[1], 0, 100);
     render();
+    scheduleCommit();
   });
 
   // ===== イベント: 色相リング =====
@@ -195,6 +277,8 @@
   // リング上（またはつまみ）を押したらドラッグ開始。中央パネルは別処理なので除外
   el.wheel.addEventListener('pointerdown', function (e) {
     if (el.svPanel.contains(e.target)) return;
+    // ホイールの隅に置いた Undo / Redo ボタンの操作では色相を変えない
+    if (el.undo.contains(e.target) || el.redo.contains(e.target)) return;
     if (e.target !== el.hueCursor && !isOnRing(e)) return;
     e.preventDefault();
     el.wheel.setPointerCapture(e.pointerId);
@@ -205,6 +289,8 @@
   el.wheel.addEventListener('pointermove', function (e) {
     if (el.wheel.hasPointerCapture(e.pointerId)) updateHueFromPointer(e);
   });
+  // ドラッグを終えたら 1 件の履歴として確定する
+  el.wheel.addEventListener('lostpointercapture', commitNow);
 
   // 色相つまみの矢印キー操作（右・上で時計回り、Shift 押下時は 10 刻み）
   el.hueCursor.addEventListener('keydown', function (e) {
@@ -215,6 +301,7 @@
     e.preventDefault();
     state.h = (state.h + delta + 360) % 360;
     render();
+    scheduleCommit();
   });
 
   // ===== イベント: スライダー =====
@@ -224,6 +311,8 @@
     state.a = parseFloat(el.alphaSlider.value) / 100;
     render('alpha');
   });
+  // つまみを離したとき（値の確定時）に履歴へ確定する
+  el.alphaSlider.addEventListener('change', commitNow);
 
   // ===== イベント: カラーコード入力 =====
 
@@ -235,6 +324,8 @@
     setFromRgb(rgb);
     render('hex');
   });
+  // 入力の確定（Enter・フォーカス移動）時に履歴へ確定する
+  el.hex.addEventListener('change', commitNow);
   // フォーカスが外れたら正規化した表記に戻す
   el.hex.addEventListener('blur', function () { render(); });
 
@@ -251,6 +342,8 @@
       setFromRgb({ r: Math.round(r), g: Math.round(g), b: Math.round(b), a: a });
       render('rgb');
     });
+    // 入力の確定（Enter・フォーカス移動・スピンボタン）時に履歴へ確定する
+    input.addEventListener('change', commitNow);
     // フォーカスが外れたら範囲内に補正した値を表示し直す
     input.addEventListener('blur', function () { render(); });
   });
@@ -270,6 +363,8 @@
       state.a = a;
       render('hsv');
     });
+    // 入力の確定時に履歴へ確定する
+    input.addEventListener('change', commitNow);
     input.addEventListener('blur', function () { render(); });
   });
 
@@ -327,6 +422,8 @@
       state.a = parsed.value.a;
     }
     render();
+    // 貼り付けは 1 回の操作なので、すぐに履歴へ確定する
+    commitNow();
   }
 
   document.querySelectorAll('[data-paste]').forEach(function (button) {
@@ -369,6 +466,8 @@
       state.v = color.v;
       state.a = color.a;
       render();
+      // マイカラーからの呼び出しも 1 件の履歴として確定する
+      commitNow();
     },
     notify: showToast
   });

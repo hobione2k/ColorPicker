@@ -103,6 +103,22 @@ body {
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-toggle__icon { font-size: 1rem; line-height: 1; }
+
+/* Undo / Redo ボタン: ホイール（正方形）の下側の左右の隅に重ねる。円の外側なので色選択の邪魔にならない */
+.wheel__history {
+  position: absolute;
+  bottom: 0;
+}
+.wheel__history--undo { left: 0; }
+.wheel__history--redo { right: 0; }
+/* 履歴が無いときは押せないことが分かるよう薄く表示する */
+/* （.field__btn:hover より前に定義しているため、詳細度を上げてホバー時も上書きする） */
+.wheel .wheel__history:disabled {
+  opacity: .4;
+  cursor: default;
+  border-color: var(--border);
+  color: var(--text);
+}
 .picker__visual {
   display: flex;
   /* 左右の列の高さを揃え、右列下端の保存ボタンを透明度スライダーの高さに合わせる */
@@ -430,6 +446,68 @@ body {
   .my-colors__remove { opacity: 1; }
 }
 
+/* ===== ショートカットキー一覧（アコーディオンパネル） ===== */
+/* マイカラーの下に区切り線を挟んで配置する */
+.shortcuts {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: .85rem;
+}
+/* 開閉用の見出し: 標準の三角マーカーを消し、開閉状態に合わせて回転する矢印を付ける */
+.shortcuts__summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-weight: 600;
+  /* 目立たせすぎないよう、控えめな文字色にする（ホバー時はアクセント色） */
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.shortcuts__summary::-webkit-details-marker { display: none; }
+.shortcuts__summary::before {
+  content: "▶";
+  font-size: .65rem;
+  color: var(--muted);
+  transition: transform .15s;
+}
+.shortcuts[open] > .shortcuts__summary::before { transform: rotate(90deg); }
+.shortcuts__summary:hover { color: var(--accent); }
+.shortcuts__summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+/* キーと説明を 2 列の表形式で並べる */
+.shortcuts__list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+/* キー欄の「+」「矢印キー」などの文字もキーと同じ控えめな色にそろえる */
+.shortcuts__list dt { white-space: nowrap; }
+.shortcuts__list dd { margin: 0; color: var(--muted); }
+/* 補足説明 */
+.shortcuts__note { margin: 8px 0 0; font-size: .8rem; color: var(--muted); }
+/* キーの表示: キーボードのキーを模した枠付きの表示 */
+.shortcuts kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  font-family: inherit;
+  font-size: .75rem;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+
 /* ===== 通知 ===== */
 .toast {
   position: fixed;
@@ -468,4 +546,8 @@ body {
   .picker__visual { flex-direction: column; align-items: center; }
   .picker__main { flex: none; width: 100%; max-width: 340px; }
   .picker__side { flex: none; width: 100%; }
+  /* ショートカット一覧は 1 列にし、キーの下に説明を並べる */
+  .shortcuts__list { grid-template-columns: 1fr; gap: 2px; }
+  .shortcuts__list dt { white-space: normal; }
+  .shortcuts__list dd + dt { margin-top: 8px; }
 }
