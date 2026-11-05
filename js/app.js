@@ -445,7 +445,6 @@
             return;
           }
           applyParsed(parsed);
-          showToast('貼り付けました: ' + formatted()[format]);
         })
         // 読み取りの許可が拒否された場合など
         .catch(function () { showToast('クリップボードを読み取れませんでした'); });
