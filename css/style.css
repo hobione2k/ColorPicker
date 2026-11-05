@@ -1,0 +1,364 @@
+/* ===== 配色トークン（ライト / ダーク） =====
+ * テーマは <html data-theme="light|dark"> で切り替える（js/theme.js が設定）
+ * data-theme が無い場合は OS の設定（prefers-color-scheme）に従う */
+
+/* ライトテーマ（既定） */
+:root {
+  color-scheme: light;   /* 数値欄のスピンボタンなどブラウザ標準部品の配色 */
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --panel: #f6f8fa;      /* 入力パネルの背景 */
+  --text: #1f2328;
+  --muted: #656d76;
+  --border: #d0d7de;
+  --accent: #2f6feb;
+  --danger: #d1242f;
+  --checker-a: #ffffff;
+  --checker-b: #d9d9d9;
+}
+/* ダークテーマ: 明示的に dark を選んだ場合 */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --panel: #1c2129;
+  --text: #e6edf3;
+  --muted: #8d96a0;
+  --border: #30363d;
+  --accent: #4c8dff;
+  --danger: #ff6b6b;
+  --checker-a: #3a3a3a;
+  --checker-b: #2a2a2a;
+}
+/* ダークテーマ: 未選択で OS がダークモードの場合（light を明示したときは除く） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0d1117;
+    --surface: #161b22;
+    --panel: #1c2129;
+    --text: #e6edf3;
+    --muted: #8d96a0;
+    --border: #30363d;
+    --accent: #4c8dff;
+    --danger: #ff6b6b;
+    --checker-a: #3a3a3a;
+    --checker-b: #2a2a2a;
+  }
+}
+
+/* ===== 基本 ===== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  /* 縦に「ピッカー → フッター」を並べ、フッターを画面下端へ押し下げる */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px 16px 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+}
+
+/* ===== 全体レイアウト ===== */
+.picker {
+  width: 100%;
+  /* 左にピッカー、右に入力欄を並べるため横幅を広めに取る */
+  max-width: 760px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+/* ヘッダー: 左にタイトル、右にテーマ切り替えボタン */
+.picker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.picker__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+/* テーマ切り替えボタン */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: .8rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-toggle__icon { font-size: 1rem; line-height: 1; }
+.picker__visual {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+/* ピッカー本体（ホイール + 透明度スライダーを縦に並べる）: 左側 */
+.picker__main {
+  flex: 0 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* プレビュー + 各色形式の入力欄: 右側の残り幅を使う */
+.picker__side {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 透明部分を見せるための市松模様 */
+.checker {
+  background-color: var(--checker-a);
+  background-image:
+    linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%),
+    linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+
+/* ===== 円形ホイール ===== */
+/* 寸法はすべてホイール直径に対する割合で指定（JS 側の当たり判定と揃えること）
+ *   リングの太さ : 直径の 10%（外半径 50% / 内半径 40%）
+ *   中央パネル   : 内円に内接する正方形（80% ÷ √2 ≒ 56.5%）より少し小さい 54% */
+.wheel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  user-select: none;
+}
+
+/* 色相リング: 上を 0°(赤) として時計回りに色相が一周する */
+.wheel__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  /* 中心から 80% より内側を透明にしてドーナツ型にくり抜く */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(80% - 1px), #000 80%);
+  mask: radial-gradient(farthest-side, transparent calc(80% - 1px), #000 80%);
+}
+
+/* 色相つまみ: 位置は JS でリング幅の中央（半径 45%）に配置 */
+.wheel__hue-cursor {
+  position: absolute;
+  width: 8%;
+  aspect-ratio: 1 / 1;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), 0 1px 4px rgba(0, 0, 0, .4);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+}
+.wheel__hue-cursor:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ===== 彩度・明度パネル ===== */
+/* 上から黒、左から白のグラデーションを色相の純色に重ねて SV 平面を表現 */
+.sv-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  cursor: crosshair;
+  touch-action: none;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent),
+    var(--hue-color, red);
+}
+.sv-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sv-panel__cursor {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(0, 0, 0, .3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ===== プレビュー ===== */
+.preview {
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.preview__color { width: 100%; height: 100%; }
+
+/* ===== スライダー ===== */
+.slider { display: flex; flex-direction: column; gap: 4px; }
+.slider__label { font-size: .8rem; color: var(--muted); }
+.slider__track { display: block; border-radius: 6px; }
+.slider__input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: block;
+}
+/* 透明度スライダーは JS で設定したグラデーションを市松模様の上に重ねる */
+.slider__input--alpha { background: var(--alpha-gradient, transparent); }
+
+/* つまみの見た目（Chromium / Safari） */
+.slider__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 8px;
+  height: 20px;
+  border-radius: 3px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .5);
+}
+/* つまみの見た目（Firefox） */
+.slider__input::-moz-range-thumb {
+  width: 8px;
+  height: 20px;
+  border-radius: 3px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .5);
+}
+
+/* ===== 数値入力欄 ===== */
+/* 3 つの色形式をまとめて囲む 1 枚のパネル */
+.picker__fields {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+/* パネル内の各色形式: 1 段目に形式名、2 段目に入力欄とコピーボタンを並べる */
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 12px 0;
+}
+/* 色形式どうしの間に区切り線を入れる（先頭以外） */
+.field + .field { border-top: 1px solid var(--border); }
+.field__name {
+  grid-column: 1 / -1;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.field__inputs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.field__inputs input,
+.field__text {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 6px;
+  font: inherit;
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  /* パネル背景より一段明るくして入力欄を目立たせる */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.field__text {
+  grid-column: 1 / -1;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.field__inputs input:focus,
+.field__text:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.field__text.is-invalid { border-color: var(--danger); outline-color: var(--danger); }
+
+/* コピー / 貼り付けボタンを横に並べる */
+.field__actions {
+  display: flex;
+  gap: 6px;
+}
+/* アイコンのみの正方形ボタン（入力欄と高さを揃える） */
+.field__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: .8rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.field__btn:hover { border-color: var(--accent); color: var(--accent); }
+/* SVG アイコン: 線の色は currentColor なのでボタンの文字色（テーマ・ホバー）に追従する */
+.field__icon { display: block; pointer-events: none; }
+.field__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ===== 通知 ===== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 8px);
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: .85rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* ===== フッター ===== */
+/* margin-top: auto で残りの高さを埋め、常に画面（またはページ）の下端に置く */
+.footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.footer__link { color: var(--muted); text-decoration: none; }
+.footer__link:hover { color: var(--accent); text-decoration: underline; }
+.footer__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+/* ===== 狭い画面用 ===== */
+/* 横に並べきれない幅では、ピッカーの下に入力欄を回り込ませる */
+@media (max-width: 640px) {
+  .picker__visual { flex-direction: column; align-items: center; }
+  .picker__main { flex: none; width: 100%; max-width: 340px; }
+  .picker__side { flex: none; width: 100%; }
+}

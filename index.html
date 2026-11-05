@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ColorPicker</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <!-- 描画前にテーマを確定させ、ちらつきを防ぐため head 内で読み込む -->
+  <script src="./js/theme.js"></script>
+</head>
+<body>
+  <main class="picker">
+    <header class="picker__header">
+      <h1 class="picker__title">ColorPicker</h1>
+      <!-- ライト / ダークテーマの切り替えボタン（表示内容は js/theme.js が設定） -->
+      <button id="theme-toggle" class="theme-toggle" type="button">
+        <span class="theme-toggle__icon" aria-hidden="true"></span>
+        <span class="theme-toggle__label"></span>
+      </button>
+    </header>
+
+    <!-- 色を視覚的に選ぶエリア -->
+    <section class="picker__visual">
+      <!-- ピッカー本体: 円形ホイールとその下の透明度スライダーを縦に並べる -->
+      <div class="picker__main">
+        <!-- 円形ホイール: 外周のリングで色相、中央の四角で彩度・明度を選ぶ -->
+        <div id="wheel" class="wheel">
+          <!-- 色相リング（円錐グラデーションをドーナツ型にくり抜いたもの） -->
+          <div class="wheel__ring"></div>
+          <!-- 色相リング上のつまみ（キーボード操作用にフォーカス可能） -->
+          <div id="hue-cursor" class="wheel__hue-cursor" tabindex="0" role="slider"
+               aria-label="色相" aria-valuemin="0" aria-valuemax="360"></div>
+
+          <!-- 彩度(横)・明度(縦)を選ぶパネル -->
+          <div id="sv-panel" class="sv-panel" tabindex="0" aria-label="彩度と明度">
+            <div id="sv-cursor" class="sv-panel__cursor"></div>
+          </div>
+        </div>
+
+        <!-- 透明度スライダー（ホイールの真下に配置） -->
+        <label class="slider">
+          <span class="slider__label">透明度</span>
+          <span class="slider__track checker">
+            <input id="alpha-slider" class="slider__input slider__input--alpha" type="range" min="0" max="100" step="1">
+          </span>
+        </label>
+      </div>
+
+      <!-- ピッカーの右側: プレビューと各色形式の入力欄を縦に並べる -->
+      <div class="picker__side">
+        <!-- 選択中の色のプレビュー（背景に市松模様を敷いて透明度を見やすくする） -->
+        <div class="preview checker">
+          <div id="preview-color" class="preview__color"></div>
+        </div>
+
+        <!-- 各色形式の数値入力エリア -->
+        <div class="picker__fields">
+          <!-- カラーコード -->
+          <div class="field">
+            <span class="field__name">カラーコード</span>
+            <div class="field__inputs">
+              <input id="hex-input" class="field__text" type="text" spellcheck="false" maxlength="9" aria-label="カラーコード">
+            </div>
+            <!-- コピー / 貼り付けボタン（アイコン表示。名前は aria-label / title で補う） -->
+            <div class="field__actions">
+              <button class="field__btn" type="button" data-copy="hex" aria-label="カラーコードをコピー" title="コピー"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="field__btn" type="button" data-paste="hex" aria-label="カラーコードに貼り付け" title="貼り付け"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>
+            </div>
+          </div>
+
+          <!-- RGBA -->
+          <div class="field">
+            <span class="field__name">RGBA</span>
+            <div class="field__inputs">
+              <input id="rgb-r" type="number" min="0" max="255" step="1" aria-label="赤 (R)" title="赤 (R)">
+              <input id="rgb-g" type="number" min="0" max="255" step="1" aria-label="緑 (G)" title="緑 (G)">
+              <input id="rgb-b" type="number" min="0" max="255" step="1" aria-label="青 (B)" title="青 (B)">
+              <input id="rgb-a" type="number" min="0" max="1" step="0.01" aria-label="透明度 (A)" title="透明度 (A)">
+            </div>
+            <!-- コピー / 貼り付けボタン（アイコン表示。名前は aria-label / title で補う） -->
+            <div class="field__actions">
+              <button class="field__btn" type="button" data-copy="rgba" aria-label="RGBAをコピー" title="コピー"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="field__btn" type="button" data-paste="rgba" aria-label="RGBAに貼り付け" title="貼り付け"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>
+            </div>
+          </div>
+
+          <!-- HSV -->
+          <div class="field">
+            <span class="field__name">HSV</span>
+            <div class="field__inputs">
+              <input id="hsv-h" type="number" min="0" max="360" step="1" aria-label="色相 (H)" title="色相 (H)">
+              <input id="hsv-s" type="number" min="0" max="100" step="1" aria-label="彩度 (S)" title="彩度 (S)">
+              <input id="hsv-v" type="number" min="0" max="100" step="1" aria-label="明度 (V)" title="明度 (V)">
+              <input id="hsv-a" type="number" min="0" max="1" step="0.01" aria-label="透明度 (A)" title="透明度 (A)">
+            </div>
+            <!-- コピー / 貼り付けボタン（アイコン表示。名前は aria-label / title で補う） -->
+            <div class="field__actions">
+              <button class="field__btn" type="button" data-copy="hsv" aria-label="HSVをコピー" title="コピー"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="field__btn" type="button" data-paste="hsv" aria-label="HSVに貼り付け" title="貼り付け"><svg class="field__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- コピー完了などの通知 -->
+    <p id="toast" class="toast" role="status" aria-live="polite"></p>
+  </main>
+
+  <!-- フッター: リポジトリとライセンスへのリンク（画面下端に配置） -->
+  <footer class="footer">
+    <a class="footer__link" href="https://github.com/hobione2k/ColorPicker" target="_blank" rel="noopener noreferrer">Repository</a>
+    <span class="footer__sep" aria-hidden="true">|</span>
+    <a class="footer__link" href="https://github.com/hobione2k/ColorPicker/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
+  </footer>
+
+  <script src="./js/color-convert.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
