@@ -7,16 +7,38 @@
   <link rel="stylesheet" href="./css/style.css">
   <!-- 描画前にテーマを確定させ、ちらつきを防ぐため head 内で読み込む -->
   <script src="./js/theme.js"></script>
+  <!-- 透明色の背景（市松模様 / 白 / 黒）も同じく描画前に確定させる -->
+  <script src="./js/alpha-bg.js"></script>
 </head>
 <body>
   <main class="picker">
     <header class="picker__header">
       <h1 class="picker__title">ColorPicker</h1>
-      <!-- ライト / ダークテーマの切り替えボタン（表示内容は js/theme.js が設定） -->
-      <button id="theme-toggle" class="theme-toggle" type="button">
-        <span class="theme-toggle__icon" aria-hidden="true"></span>
-        <span class="theme-toggle__label"></span>
-      </button>
+      <!-- ヘッダー右側の表示設定ボタン群 -->
+      <div class="picker__header-tools">
+        <!-- 透明色の背景の切り替え（市松模様 / 白 / 黒。処理は js/alpha-bg.js）
+             ラベルとボタン群をまとめ、狭い画面で折り返しても離れないようにする -->
+        <div class="alpha-bg-field">
+          <!-- 見た目上のラベル（読み上げはボタン群の aria-label「透明色の背景」で行うため重複させない） -->
+          <span class="alpha-bg-field__label" aria-hidden="true">透明色の背景</span>
+          <div class="alpha-bg" role="group" aria-label="透明色の背景">
+            <button class="alpha-bg__option" type="button" data-alpha-bg-option="checker" aria-pressed="false" title="透明色の背景: 市松模様">
+              <span class="alpha-bg__sample alpha-bg__sample--checker" aria-hidden="true"></span>標準
+            </button>
+            <button class="alpha-bg__option" type="button" data-alpha-bg-option="white" aria-pressed="false" title="透明色の背景: 白">
+              <span class="alpha-bg__sample alpha-bg__sample--white" aria-hidden="true"></span>白
+            </button>
+            <button class="alpha-bg__option" type="button" data-alpha-bg-option="black" aria-pressed="false" title="透明色の背景: 黒">
+              <span class="alpha-bg__sample alpha-bg__sample--black" aria-hidden="true"></span>黒
+            </button>
+          </div>
+        </div>
+        <!-- ライト / ダークテーマの切り替えボタン（表示内容は js/theme.js が設定） -->
+        <button id="theme-toggle" class="theme-toggle" type="button">
+          <span class="theme-toggle__icon" aria-hidden="true"></span>
+          <span class="theme-toggle__label"></span>
+        </button>
+      </div>
     </header>
 
     <!-- 色を視覚的に選ぶエリア -->
@@ -53,7 +75,7 @@
 
       <!-- ピッカーの右側: プレビューと各色形式の入力欄を縦に並べる -->
       <div class="picker__side">
-        <!-- 選択中の色のプレビュー（背景に市松模様を敷いて透明度を見やすくする） -->
+        <!-- 選択中の色のプレビュー（背景に市松模様 / 白 / 黒を敷いて透明度を見やすくする） -->
         <div class="preview checker">
           <div id="preview-color" class="preview__color"></div>
         </div>

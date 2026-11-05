@@ -13,8 +13,11 @@
   --border: #d0d7de;
   --accent: #2f6feb;
   --danger: #d1242f;
-  --checker-a: #ffffff;
-  --checker-b: #d9d9d9;
+  /* 透明度確認用の市松模様の色
+   * 半透明の色の見た目がテーマで変わらないよう、ダークテーマでも上書きしない */
+  /* ライト / ダークどちらの背景でも浮きすぎない中間的なグレーにする */
+  --checker-a: #cccccc;
+  --checker-b: #999999;
 }
 /* ダークテーマ: 明示的に dark を選んだ場合 */
 :root[data-theme="dark"] {
@@ -27,8 +30,6 @@
   --border: #30363d;
   --accent: #4c8dff;
   --danger: #ff6b6b;
-  --checker-a: #3a3a3a;
-  --checker-b: #2a2a2a;
 }
 /* ダークテーマ: 未選択で OS がダークモードの場合（light を明示したときは除く） */
 @media (prefers-color-scheme: dark) {
@@ -42,8 +43,6 @@
     --border: #30363d;
     --accent: #4c8dff;
     --danger: #ff6b6b;
-    --checker-a: #3a3a3a;
-    --checker-b: #2a2a2a;
   }
 }
 
@@ -104,6 +103,73 @@ body {
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-toggle__icon { font-size: 1rem; line-height: 1; }
 
+/* ヘッダー右側の表示設定ボタン群（透明色の背景 + テーマ切り替え） */
+.picker__header-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;           /* 狭い画面では折り返す */
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 透明色の背景の切り替え: 左に「背景」ラベル、右にボタン群を並べる */
+.alpha-bg-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.alpha-bg-field__label {
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+/* 透明色の背景の切り替え: 3つのボタンをつなげたセグメント型 */
+.alpha-bg {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.alpha-bg__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: .8rem;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.alpha-bg__option:hover { color: var(--accent); }
+.alpha-bg__option:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* 選択中のボタンは浮き上がって見えるように表示する */
+.alpha-bg__option[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+}
+/* 各ボタン内の背景の見本（小さな四角） */
+.alpha-bg__sample {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.alpha-bg__sample--checker {
+  background-color: var(--checker-a);
+  background-image:
+    linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%),
+    linear-gradient(45deg, var(--checker-b) 25%, transparent 25%, transparent 75%, var(--checker-b) 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 3px 3px;
+}
+.alpha-bg__sample--white { background: #ffffff; }
+.alpha-bg__sample--black { background: #000000; }
+
 /* Undo / Redo ボタン: ホイール（正方形）の下側の左右の隅に重ねる。円の外側なので色選択の邪魔にならない */
 .wheel__history {
   position: absolute;
@@ -151,6 +217,9 @@ body {
   background-size: 12px 12px;
   background-position: 0 0, 6px 6px;
 }
+/* 透明色の背景を白 / 黒に切り替えたとき（js/alpha-bg.js が <html data-alpha-bg> を設定） */
+:root[data-alpha-bg="white"] .checker { background: #ffffff; }
+:root[data-alpha-bg="black"] .checker { background: #000000; }
 
 /* ===== 円形ホイール ===== */
 /* 寸法はすべてホイール直径に対する割合で指定（JS 側の当たり判定と揃えること）
