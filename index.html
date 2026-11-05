@@ -101,8 +101,18 @@
           </div>
         </div>
 
-        <!-- マイカラー保存ボタン: HSV パネルの下、透明度スライダーの右側に配置（処理は js/my-colors.js） -->
-        <button id="my-colors-save" class="my-colors__save" type="button" title="現在の色をマイカラーに保存">＋ 保存</button>
+        <!-- マイカラー操作ボタンの行: HSV パネルの下、透明度スライダーの右側に配置（処理は js/my-colors.js） -->
+        <div class="my-colors__actions">
+          <!-- 現在の色を保存するボタン（左端） -->
+          <button id="my-colors-save" class="my-colors__save" type="button" title="現在の色をマイカラーに保存">＋ 保存</button>
+          <!-- JSON ファイルへのエクスポート / JSON ファイルからのインポート（右端） -->
+          <div class="my-colors__toolbar">
+            <button id="my-colors-export" class="my-colors__tool" type="button" title="保存した色を JSON ファイルに書き出す">エクスポート</button>
+            <button id="my-colors-import" class="my-colors__tool" type="button" title="JSON ファイルから色を読み込む">インポート</button>
+            <!-- インポート用のファイル選択欄（画面には出さず、インポートボタンから開く） -->
+            <input id="my-colors-import-file" type="file" accept=".json,application/json" hidden>
+          </div>
+        </div>
       </div>
     </section>
 

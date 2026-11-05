@@ -334,10 +334,18 @@ body {
 /* 見出し */
 .my-colors__header { margin-bottom: 12px; }
 .my-colors__title { margin: 0; font-size: 1rem; }
-/* 保存ボタン: 右列（HSV パネルの下）の最下部へ押し下げ、透明度スライダーの右側に置く */
-.my-colors__save {
+/* 操作ボタンの行: 右列（HSV パネルの下）の最下部へ押し下げ、透明度スライダーの右側に置く */
+/* 保存ボタンを左端、エクスポート / インポートボタンを右端に配置する */
+.my-colors__actions {
   margin-top: auto;
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* 保存ボタン */
+.my-colors__save {
   padding: 6px 12px;
   font: inherit;
   font-size: .8rem;
@@ -349,6 +357,24 @@ body {
 }
 .my-colors__save:hover { border-color: var(--accent); color: var(--accent); }
 .my-colors__save:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* エクスポート / インポートボタンの並び（操作ボタン行の右端に配置） */
+.my-colors__toolbar {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.my-colors__tool {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: .75rem;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.my-colors__tool:hover { border-color: var(--accent); color: var(--accent); }
+.my-colors__tool:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* 未保存時の案内文 */
 .my-colors__empty { margin: 0; font-size: .85rem; color: var(--muted); }
 /* 保存色のグリッド: 幅に合わせて列数が自動で増減する */
