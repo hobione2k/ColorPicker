@@ -355,6 +355,24 @@
     });
   });
 
+  // ===== マイカラー =====
+
+  window.MyColors.init({
+    // 現在の色（HSVA とカラーコード）を渡す
+    getColor: function () {
+      return { h: state.h, s: state.s, v: state.v, a: state.a, hex: formatted().hex };
+    },
+    // 保存済みの色を状態に反映する（HSVA のまま戻すので色相も保存時のまま再現される）
+    applyColor: function (color) {
+      state.h = color.h;
+      state.s = color.s;
+      state.v = color.v;
+      state.a = color.a;
+      render();
+    },
+    notify: showToast
+  });
+
   // ===== 初期表示 =====
   render();
 })();

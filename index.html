@@ -100,7 +100,16 @@
             </div>
           </div>
         </div>
+
+        <!-- マイカラー保存ボタン: HSV パネルの下、透明度スライダーの右側に配置（処理は js/my-colors.js） -->
+        <button id="my-colors-save" class="my-colors__save" type="button" title="現在の色をマイカラーに保存">＋ 保存</button>
       </div>
+    </section>
+
+    <!-- マイカラー: 保存した色をグリッド状のブロックで一覧表示する（表示内容は js/my-colors.js が生成） -->
+    <section class="my-colors" aria-labelledby="my-colors-title">
+      <p id="my-colors-empty" class="my-colors__empty">保存した色はありません</p>
+      <ul id="my-colors-grid" class="my-colors__grid"></ul>
     </section>
 
     <!-- コピー完了などの通知 -->
@@ -115,6 +124,7 @@
   </footer>
 
   <script src="./js/color-convert.js"></script>
+  <script src="./js/my-colors.js"></script>
   <script src="./js/app.js"></script>
 </body>
 </html>
