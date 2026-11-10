@@ -23,13 +23,13 @@
           <span class="alpha-bg-field__label" aria-hidden="true">透明色の背景</span>
           <div class="alpha-bg" role="group" aria-label="透明色の背景">
             <button class="alpha-bg__option" type="button" data-alpha-bg-option="checker" aria-pressed="false" title="透明色の背景: 市松模様">
-              <span class="alpha-bg__sample alpha-bg__sample--checker" aria-hidden="true"></span>標準
+              <span class="alpha-bg__sample alpha-bg__sample--checker" aria-hidden="true"></span><span class="alpha-bg__text">標準</span>
             </button>
             <button class="alpha-bg__option" type="button" data-alpha-bg-option="white" aria-pressed="false" title="透明色の背景: 白">
-              <span class="alpha-bg__sample alpha-bg__sample--white" aria-hidden="true"></span>白
+              <span class="alpha-bg__sample alpha-bg__sample--white" aria-hidden="true"></span><span class="alpha-bg__text">白</span>
             </button>
             <button class="alpha-bg__option" type="button" data-alpha-bg-option="black" aria-pressed="false" title="透明色の背景: 黒">
-              <span class="alpha-bg__sample alpha-bg__sample--black" aria-hidden="true"></span>黒
+              <span class="alpha-bg__sample alpha-bg__sample--black" aria-hidden="true"></span><span class="alpha-bg__text">黒</span>
             </button>
           </div>
         </div>
@@ -45,6 +45,8 @@
     <section class="picker__visual">
       <!-- ピッカー本体: 円形ホイールとその下の透明度スライダーを縦に並べる -->
       <div class="picker__main">
+        <!-- スマホ表示時の透明色の背景切り替えの置き場所（ホイールの直上。js/alpha-bg.js がヘッダーから移動させる） -->
+        <div class="alpha-bg-slot" data-alpha-bg-slot></div>
         <!-- 円形ホイール: 外周のリングで色相、中央の四角で彩度・明度を選ぶ -->
         <div id="wheel" class="wheel">
           <!-- 色相リング（円錐グラデーションをドーナツ型にくり抜いたもの） -->

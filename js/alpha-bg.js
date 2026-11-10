@@ -59,5 +59,25 @@
         save(value);
       });
     });
+
+    // スマホ表示時はボタン群をホイール直上へ、それ以外はヘッダーへ移動する
+    // （判定幅は css/style.css の狭い画面用 @media と合わせる）
+    const field = document.querySelector('.alpha-bg-field');
+    const slot = document.querySelector('[data-alpha-bg-slot]');
+    const headerTools = document.querySelector('.picker__header-tools');
+    if (!field || !slot || !headerTools) return;
+    const mobileQuery = window.matchMedia('(max-width: 640px)');
+
+    /** 画面幅に応じてボタン群の置き場所を切り替える */
+    function placeField() {
+      if (mobileQuery.matches) {
+        slot.appendChild(field);
+      } else {
+        // ヘッダーではテーマ切り替えボタンの左に置く
+        headerTools.insertBefore(field, headerTools.firstChild);
+      }
+    }
+    placeField();
+    mobileQuery.addEventListener('change', placeField);
   });
 })();
